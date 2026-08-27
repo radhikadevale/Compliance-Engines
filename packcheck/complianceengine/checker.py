@@ -1,10 +1,14 @@
+# ============================================================
+# PackCheck - Compliance Checker
+# ============================================================
+
 import json
 import re
 from pathlib import Path
 
 
 # ============================================================
-# Location of rules.json
+# Rules file
 # ============================================================
 
 RULES_FILE = (
@@ -42,11 +46,17 @@ def load_rules():
 # Get field information
 # ============================================================
 
-def get_field_info(product, field):
+def get_field_info(
+    product,
+    field
+):
 
     value = product.get(field)
 
-    # New OCR format
+    # --------------------------------------------------------
+    # OCR object
+    # --------------------------------------------------------
+
     if isinstance(value, dict):
 
         return {
@@ -59,7 +69,11 @@ def get_field_info(product, field):
             )
         }
 
-    # Old/simple format
+
+    # --------------------------------------------------------
+    # Simple value
+    # --------------------------------------------------------
+
     if value is not None:
 
         return {
@@ -68,6 +82,11 @@ def get_field_info(product, field):
             "detected": True,
             "field_visibility": "clear"
         }
+
+
+    # --------------------------------------------------------
+    # Missing
+    # --------------------------------------------------------
 
     return {
         "value": None,
@@ -93,15 +112,20 @@ def image_is_reliable(product):
 
     try:
 
-        return float(quality) >= IMAGE_QUALITY_THRESHOLD
+        return float(quality) >= (
+            IMAGE_QUALITY_THRESHOLD
+        )
 
-    except (ValueError, TypeError):
+    except (
+        TypeError,
+        ValueError
+    ):
 
         return False
 
 
 # ============================================================
-# Check evidence quality
+# Check evidence reliability
 # ============================================================
 
 def evidence_is_reliable(
@@ -109,38 +133,42 @@ def evidence_is_reliable(
     field_info
 ):
 
-    # Image quality
+    # Image
     if not image_is_reliable(product):
 
         return False
 
 
-    # Field visibility
-    visibility = field_info.get(
+    # Visibility
+    if field_info[
         "field_visibility"
-    )
-
-    if visibility == "uncertain":
+    ] == "uncertain":
 
         return False
 
 
-    # OCR confidence
-    confidence = field_info.get(
+    # Confidence
+    confidence = field_info[
         "confidence"
-    )
+    ]
 
     if confidence is not None:
 
         try:
 
-            if float(confidence) < OCR_CONFIDENCE_THRESHOLD:
+            if float(confidence) < (
+                OCR_CONFIDENCE_THRESHOLD
+            ):
 
                 return False
 
-        except (ValueError, TypeError):
+        except (
+            TypeError,
+            ValueError
+        ):
 
             return False
+
 
     return True
 
@@ -161,17 +189,29 @@ def validate_mrp(value):
 
         return False
 
-    # Obvious OCR uncertainty
 
+    # OCR uncertainty
     if "?" in text:
+
         return False
 
     if "..." in text:
+
         return False
 
-    # Basic MRP format
 
-    pattern = r"(₹|Rs\.?|INR)?\s*\d+(?:\.\d{1,2})?"
+    # Examples:
+    #
+    # ₹50
+    # ₹50.00
+    # Rs 50
+    # Rs. 50
+    # INR 50
+
+    pattern = (
+        r"(₹|Rs\.?|INR)?\s*"
+        r"\d+(?:\.\d{1,2})?"
+    )
 
     return bool(
         re.fullmatch(
@@ -195,33 +235,24 @@ def validate_field(
 
         return False
 
+
     text = str(value).strip()
 
     if not text:
 
         return False
 
+
     if field == "mrp":
 
         return validate_mrp(value)
+
 
     return True
 
 
 # ============================================================
-# Check whether field is required
-# ============================================================
-
-def is_required(rule):
-
-    return rule.get(
-        "required",
-        True
-    )
-
-
-# ============================================================
-# Check one applicable rule
+# Check one rule
 # ============================================================
 
 def check_rule(
@@ -238,11 +269,17 @@ def check_rule(
         field
     )
 
-    value = field_info["value"]
+    value = field_info[
+        "value"
+    ]
 
-    confidence = field_info["confidence"]
+    confidence = field_info[
+        "confidence"
+    ]
 
-    detected = field_info["detected"]
+    detected = field_info[
+        "detected"
+    ]
 
     visibility = field_info[
         "field_visibility"
@@ -251,7 +288,7 @@ def check_rule(
 
     # ========================================================
     # STEP 1
-    # Evidence quality
+    # Evidence is unreliable
     # ========================================================
 
     if not evidence_is_reliable(
@@ -275,7 +312,7 @@ def check_rule(
 
     # ========================================================
     # STEP 2
-    # Field detected
+    # Information detected
     # ========================================================
 
     if detected is True:
@@ -298,6 +335,7 @@ def check_rule(
                 )
             }
 
+
         return {
             "rule_id": rule["rule_id"],
             "rule_number": rule["rule_number"],
@@ -307,52 +345,40 @@ def check_rule(
             "confidence": confidence,
             "reason": (
                 "Information was detected, but the "
-                "extracted value could not be reliably validated."
+                "value could not be reliably validated."
             )
         }
 
 
     # ========================================================
     # STEP 3
-    # Field definitely absent
+    # Information definitely absent
     # ========================================================
 
     if detected is False:
 
+        # Only treat as definite absence if the
+        # field was actually visible/clear.
+
         if visibility == "clear":
-
-            if is_required(rule):
-
-                return {
-                    "rule_id": rule["rule_id"],
-                    "rule_number": rule["rule_number"],
-                    "field": field,
-                    "status": "FAIL",
-                    "value": None,
-                    "confidence": confidence,
-                    "reason": (
-                        "The required information was "
-                        "clearly absent from the visible label."
-                    )
-                }
 
             return {
                 "rule_id": rule["rule_id"],
                 "rule_number": rule["rule_number"],
                 "field": field,
-                "status": "PASS",
+                "status": "FAIL",
                 "value": None,
                 "confidence": confidence,
                 "reason": (
-                    "The field is not required "
-                    "for this applicable rule."
+                    "The required information was "
+                    "clearly absent from the visible label."
                 )
             }
 
 
     # ========================================================
     # STEP 4
-    # Cannot determine
+    # Unknown situation
     # ========================================================
 
     return {
@@ -363,7 +389,7 @@ def check_rule(
         "value": value,
         "confidence": confidence,
         "reason": (
-            "The available evidence is insufficient "
+            "Available evidence is insufficient "
             "to determine compliance."
         )
     }
@@ -382,6 +408,7 @@ def check_product(
 
     results = []
 
+
     applicable_rule_ids = (
         applicability_result.get(
             "applicable_rule_ids",
@@ -389,12 +416,15 @@ def check_product(
         )
     )
 
+
     for rule in rules_data.get(
         "rules",
         []
     ):
 
-        if rule["rule_id"] in applicable_rule_ids:
+        if rule["rule_id"] in (
+            applicable_rule_ids
+        ):
 
             result = check_rule(
                 product,
@@ -405,6 +435,7 @@ def check_product(
                 result
             )
 
+
     return results
 
 
@@ -414,7 +445,9 @@ def check_product(
 
 def get_overall_status(results):
 
+    # --------------------------------------------------------
     # FAIL has highest priority
+    # --------------------------------------------------------
 
     for result in results:
 
@@ -423,19 +456,26 @@ def get_overall_status(results):
             return "FAIL"
 
 
-    # Verification next
+    # --------------------------------------------------------
+    # Verification second
+    # --------------------------------------------------------
 
     for result in results:
 
-        if result["status"] == "NEEDS_VERIFICATION":
+        if result["status"] == (
+            "NEEDS_VERIFICATION"
+        ):
 
             return "NEEDS_VERIFICATION"
 
 
+    # --------------------------------------------------------
     # Everything passed
+    # --------------------------------------------------------
 
     if results:
 
         return "PASS"
+
 
     return "NEEDS_VERIFICATION"
