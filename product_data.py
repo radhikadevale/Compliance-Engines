@@ -1,16 +1,50 @@
 product = {
-    "product_name": "XYZ Biscuits",
-    "net_quantity": "200 g",
-    "mrp": "₹50",
 
-    "manufacturer_packer_importer": (
-        "ABC Foods Pvt. Ltd., Pune, Maharashtra"
-    ),
+    # ==============================
+    # Product information
+    # ==============================
 
-    "manufacture_prepack_import_date": "08/2026",
+    "product_name": {
+        "value": "ABC BISCUITS",
+        "confidence": 0.98
+    },
 
-    "consumer_complaint_contact": (
-        "ABC Foods Pvt. Ltd., Pune, Maharashtra, "
-        "Phone: 1800-123-4567, Email: support@abcfoods.com"
-    )
+    "net_quantity": {
+        "value": "200 g",
+        "confidence": 0.97
+    },
+
+    "mrp": {
+        "value": "₹50.00",
+        "confidence": 0.96,
+        "detected": True,
+        "field_visibility": "clear"
+    },
+
+    "manufacturer": {
+        "value": "ABC Foods",
+        "confidence": 0.94
+    },
+
+
+    # ==============================
+    # Applicability information
+    # ==============================
+
+    "commodity_type": "packaged_commodity",
+
+    "intended_sale": "retail",
+
+    "consumer_type": "retail",
+
+    "package_quantity": 200,
+
+    "package_unit": "g",
+
+
+    # ==============================
+    # Image quality
+    # ==============================
+
+    "image_quality": 0.95
 }

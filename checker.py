@@ -1,209 +1,441 @@
 import json
+import re
 from pathlib import Path
 
-from product_data import product
 
-
-# ==================================================
-# 1. Location of rules.json
-# ==================================================
+# ============================================================
+# Location of rules.json
+# ============================================================
 
 RULES_FILE = (
     Path(__file__).parent
-    / "PackCheck"
-    / "compliance_engine"
     / "rules"
     / "rules.json"
 )
 
 
-# ==================================================
-# 2. Load rules.json
-# ==================================================
+# ============================================================
+# Thresholds
+# ============================================================
+
+IMAGE_QUALITY_THRESHOLD = 0.60
+
+OCR_CONFIDENCE_THRESHOLD = 0.60
+
+
+# ============================================================
+# Load rules
+# ============================================================
 
 def load_rules():
 
-    with open(RULES_FILE, "r", encoding="utf-8") as file:
+    with open(
+        RULES_FILE,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
         return json.load(file)
 
 
-# ==================================================
-# 3. Check whether product field contains information
-# ==================================================
+# ============================================================
+# Get field information
+# ============================================================
 
-def check_field(product, field):
+def get_field_info(product, field):
 
     value = product.get(field)
 
-    if value is not None and str(value).strip() != "":
-        return "PASS"
+    # New OCR format
+    if isinstance(value, dict):
 
-    return "NEEDS_VERIFICATION"
+        return {
+            "value": value.get("value"),
+            "confidence": value.get("confidence"),
+            "detected": value.get("detected"),
+            "field_visibility": value.get(
+                "field_visibility",
+                "uncertain"
+            )
+        }
+
+    # Old/simple format
+    if value is not None:
+
+        return {
+            "value": value,
+            "confidence": 1.0,
+            "detected": True,
+            "field_visibility": "clear"
+        }
+
+    return {
+        "value": None,
+        "confidence": None,
+        "detected": False,
+        "field_visibility": "uncertain"
+    }
 
 
-# ==================================================
-# 4. Check one rule from rules.json
-# ==================================================
+# ============================================================
+# Check image quality
+# ============================================================
 
-def check_rule(product, rule):
+def image_is_reliable(product):
 
-    field = rule.get("field")
+    quality = product.get(
+        "image_quality"
+    )
 
-    # Check whether the required field exists
-    if field not in product:
+    if quality is None:
+
+        return False
+
+    try:
+
+        return float(quality) >= IMAGE_QUALITY_THRESHOLD
+
+    except (ValueError, TypeError):
+
+        return False
+
+
+# ============================================================
+# Check evidence quality
+# ============================================================
+
+def evidence_is_reliable(
+    product,
+    field_info
+):
+
+    # Image quality
+    if not image_is_reliable(product):
+
+        return False
+
+
+    # Field visibility
+    visibility = field_info.get(
+        "field_visibility"
+    )
+
+    if visibility == "uncertain":
+
+        return False
+
+
+    # OCR confidence
+    confidence = field_info.get(
+        "confidence"
+    )
+
+    if confidence is not None:
+
+        try:
+
+            if float(confidence) < OCR_CONFIDENCE_THRESHOLD:
+
+                return False
+
+        except (ValueError, TypeError):
+
+            return False
+
+    return True
+
+
+# ============================================================
+# Validate MRP
+# ============================================================
+
+def validate_mrp(value):
+
+    if value is None:
+
+        return False
+
+    text = str(value).strip()
+
+    if not text:
+
+        return False
+
+    # Obvious OCR uncertainty
+
+    if "?" in text:
+        return False
+
+    if "..." in text:
+        return False
+
+    # Basic MRP format
+
+    pattern = r"(₹|Rs\.?|INR)?\s*\d+(?:\.\d{1,2})?"
+
+    return bool(
+        re.fullmatch(
+            pattern,
+            text,
+            flags=re.IGNORECASE
+        )
+    )
+
+
+# ============================================================
+# Validate generic field
+# ============================================================
+
+def validate_field(
+    field,
+    value
+):
+
+    if value is None:
+
+        return False
+
+    text = str(value).strip()
+
+    if not text:
+
+        return False
+
+    if field == "mrp":
+
+        return validate_mrp(value)
+
+    return True
+
+
+# ============================================================
+# Check whether field is required
+# ============================================================
+
+def is_required(rule):
+
+    return rule.get(
+        "required",
+        True
+    )
+
+
+# ============================================================
+# Check one applicable rule
+# ============================================================
+
+def check_rule(
+    product,
+    rule
+):
+
+    field = rule.get(
+        "field"
+    )
+
+    field_info = get_field_info(
+        product,
+        field
+    )
+
+    value = field_info["value"]
+
+    confidence = field_info["confidence"]
+
+    detected = field_info["detected"]
+
+    visibility = field_info[
+        "field_visibility"
+    ]
+
+
+    # ========================================================
+    # STEP 1
+    # Evidence quality
+    # ========================================================
+
+    if not evidence_is_reliable(
+        product,
+        field_info
+    ):
 
         return {
             "rule_id": rule["rule_id"],
             "rule_number": rule["rule_number"],
             "field": field,
             "status": "NEEDS_VERIFICATION",
+            "value": value,
+            "confidence": confidence,
             "reason": (
-                "Required information was not provided "
-                "in product data."
+                "Image/OCR evidence is insufficient "
+                "to reliably determine compliance."
             )
         }
 
-    # Check whether information is present
-    status = check_field(product, field)
 
-    if status == "PASS":
+    # ========================================================
+    # STEP 2
+    # Field detected
+    # ========================================================
 
-        reason = (
-            "Information was detected in the "
-            "product data."
-        )
+    if detected is True:
 
-    else:
+        if validate_field(
+            field,
+            value
+        ):
 
-        reason = (
-            "Information was not detected. "
-            "Missing OCR/data does not by itself "
-            "prove legal non-compliance."
-        )
+            return {
+                "rule_id": rule["rule_id"],
+                "rule_number": rule["rule_number"],
+                "field": field,
+                "status": "PASS",
+                "value": value,
+                "confidence": confidence,
+                "reason": (
+                    "Required information was clearly "
+                    "detected and passed validation."
+                )
+            }
+
+        return {
+            "rule_id": rule["rule_id"],
+            "rule_number": rule["rule_number"],
+            "field": field,
+            "status": "NEEDS_VERIFICATION",
+            "value": value,
+            "confidence": confidence,
+            "reason": (
+                "Information was detected, but the "
+                "extracted value could not be reliably validated."
+            )
+        }
+
+
+    # ========================================================
+    # STEP 3
+    # Field definitely absent
+    # ========================================================
+
+    if detected is False:
+
+        if visibility == "clear":
+
+            if is_required(rule):
+
+                return {
+                    "rule_id": rule["rule_id"],
+                    "rule_number": rule["rule_number"],
+                    "field": field,
+                    "status": "FAIL",
+                    "value": None,
+                    "confidence": confidence,
+                    "reason": (
+                        "The required information was "
+                        "clearly absent from the visible label."
+                    )
+                }
+
+            return {
+                "rule_id": rule["rule_id"],
+                "rule_number": rule["rule_number"],
+                "field": field,
+                "status": "PASS",
+                "value": None,
+                "confidence": confidence,
+                "reason": (
+                    "The field is not required "
+                    "for this applicable rule."
+                )
+            }
+
+
+    # ========================================================
+    # STEP 4
+    # Cannot determine
+    # ========================================================
 
     return {
         "rule_id": rule["rule_id"],
         "rule_number": rule["rule_number"],
         "field": field,
-        "status": status,
-        "reason": reason
+        "status": "NEEDS_VERIFICATION",
+        "value": value,
+        "confidence": confidence,
+        "reason": (
+            "The available evidence is insufficient "
+            "to determine compliance."
+        )
     }
 
 
-# ==================================================
-# 5. Check prototype rules from rules.json
-# ==================================================
+# ============================================================
+# Check applicable rules
+# ============================================================
 
-def check_product(product):
+def check_product(
+    product,
+    applicability_result
+):
 
     rules_data = load_rules()
 
     results = []
 
-    # Get selected rules from rules.json
-    prototype_rule_ids = rules_data.get(
-        "prototype_priority_rules",
-        []
+    applicable_rule_ids = (
+        applicability_result.get(
+            "applicable_rule_ids",
+            []
+        )
     )
 
-    # Read all rules from rules.json
-    for rule in rules_data.get("rules", []):
+    for rule in rules_data.get(
+        "rules",
+        []
+    ):
 
-        # Only check rules selected for prototype
-        if rule["rule_id"] in prototype_rule_ids:
+        if rule["rule_id"] in applicable_rule_ids:
 
-            result = check_rule(product, rule)
+            result = check_rule(
+                product,
+                rule
+            )
 
-            results.append(result)
+            results.append(
+                result
+            )
 
     return results
 
 
-# ==================================================
-# 6. Calculate overall compliance status
-# ==================================================
+# ============================================================
+# Overall result
+# ============================================================
 
 def get_overall_status(results):
 
     # FAIL has highest priority
+
     for result in results:
 
         if result["status"] == "FAIL":
+
             return "FAIL"
 
-    # NEEDS_VERIFICATION has second priority
+
+    # Verification next
+
     for result in results:
 
         if result["status"] == "NEEDS_VERIFICATION":
+
             return "NEEDS_VERIFICATION"
 
+
     # Everything passed
-    return "PASS"
 
+    if results:
 
-# ==================================================
-# 7. Run Compliance Engine
-# ==================================================
+        return "PASS"
 
-if __name__ == "__main__":
-
-    try:
-
-        # Load product data
-        results = check_product(product)
-
-        # Calculate overall result
-        overall_status = get_overall_status(results)
-
-        print()
-        print("========================================")
-        print("     PackCheck Compliance Engine")
-        print("========================================")
-
-        print()
-        print("Product data:")
-        print("----------------------------------------")
-        print(product)
-
-        print()
-        print(f"Overall Status: {overall_status}")
-
-        print()
-        print("Rule Checks:")
-        print("----------------------------------------")
-
-        for result in results:
-
-            print(
-                f"{result['rule_number']} | "
-                f"{result['field']} | "
-                f"{result['status']}"
-            )
-
-            print(
-                f"Reason: {result['reason']}"
-            )
-
-            print()
-
-    except FileNotFoundError:
-
-        print()
-        print("ERROR:")
-        print()
-        print("rules.json was not found.")
-        print("Expected location:")
-        print(RULES_FILE)
-
-    except json.JSONDecodeError:
-
-        print()
-        print("ERROR:")
-        print()
-        print("rules.json contains invalid JSON.")
-
-    except Exception as e:
-
-        print()
-        print("ERROR:")
-        print(e)
+    return "NEEDS_VERIFICATION"

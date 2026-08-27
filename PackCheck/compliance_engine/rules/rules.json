@@ -1,20 +1,88 @@
+
 {
   "project": "PackCheck",
+
   "ruleset": "Legal Metrology (Packaged Commodities) Rules, 2011",
+
   "source": "Uploaded PDF",
+
   "disclaimer": "Educational compliance-assistance prototype. OCR failure or missing extracted text must not by itself be treated as legal non-compliance.",
 
+
   "applicability": {
+
     "primary_chapter": "Chapter II - Provisions applicable to packages intended for retail sale",
+
     "rule_number": "Rule 3",
+
     "applies_to": "Retail-sale packaged commodities",
-    "exclusions": [
-      "Packages containing quantity more than 25 kg or 25 litre, excluding cement and fertilizer sold in bags up to 50 kg",
-      "Packaged commodities meant for industrial consumers",
-      "Packaged commodities meant for institutional consumers"
+
+
+    "scope_conditions": [
+
+      {
+        "condition_id": "A001",
+        "field": "commodity_type",
+        "operator": "equals",
+        "value": "packaged_commodity",
+        "description": "Product is a packaged commodity."
+      },
+
+      {
+        "condition_id": "A002",
+        "field": "intended_sale",
+        "operator": "equals",
+        "value": "retail",
+        "description": "Package is intended for retail sale."
+      }
+
     ],
+
+
+    "exclusions": [
+
+      {
+        "exclusion_id": "E001",
+        "field": "package_quantity",
+        "operator": "greater_than",
+        "value": 25,
+        "description": "Package contains more than 25 kg or 25 litre, subject to the stated legal exceptions."
+      },
+
+      {
+        "exclusion_id": "E002",
+        "field": "consumer_type",
+        "operator": "equals",
+        "value": "industrial",
+        "description": "Package is intended for an industrial consumer."
+      },
+
+      {
+        "exclusion_id": "E003",
+        "field": "consumer_type",
+        "operator": "equals",
+        "value": "institutional",
+        "description": "Package is intended for an institutional consumer."
+      }
+
+    ],
+
+
+    "decision_policy": {
+
+      "APPLICABLE": "All required scope conditions are satisfied and no applicable exclusion is established.",
+
+      "NOT_APPLICABLE": "An applicable exclusion is definitely established.",
+
+      "NEEDS_VERIFICATION": "Available product information is insufficient to determine applicability."
+
+    },
+
+
     "source": "PDF Page 3/43"
+
   },
+
 
   "rules": [
 
@@ -22,423 +90,806 @@
       "rule_id": "R001",
       "rule_number": "Rule 4",
       "field": "required_declarations",
+
       "requirement": "A commodity must not be pre-packed for sale, distribution or delivery unless the package or securely affixed label bears the declarations required by the Rules.",
-      "applicability": "Packages covered by Chapter II",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"]
+      },
+
       "conditions": "Retail-sale packaged commodities. Packages leaving the manufacturer's premises must have the required retail sale price declaration.",
+
       "validation_type": "declaration_presence",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "A required declaration is definitely established as absent from a clear image.",
+
       "verification_required": true,
+
       "source": "Rule 4, PDF Page 4/43"
     },
+
 
     {
       "rule_id": "R002",
       "rule_number": "Rule 6(1)(a)",
       "field": "manufacturer_packer_importer",
+
       "requirement": "The package must declare the name and address of the manufacturer. Where the manufacturer is not the packer, the manufacturer and packer name and address must be mentioned. For imported packages, the importer name and address must be mentioned.",
-      "applicability": "Every package covered by the relevant provision",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "conditional_fields": [
+          "manufacturer",
+          "packer",
+          "importer"
+        ]
+      },
+
       "conditions": "Imported packages require importer details. Manufacturer/packer relationship affects which details are required.",
+
       "validation_type": "presence_and_role_detection",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Required identity/address information is definitely absent and the applicable role is known.",
+
       "verification_required": true,
+
       "source": "Rule 6(1)(a), PDF Pages 5-6/43"
     },
+
 
     {
       "rule_id": "R003",
       "rule_number": "Rule 6(1)(b)",
       "field": "product_name",
+
       "requirement": "The common or generic name of the commodity contained in the package must be mentioned. For packages containing more than one product, the name and number or quantity of each product must be mentioned.",
-      "applicability": "Packages covered by Chapter II",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "multi_product_package"
+      },
+
       "conditions": "For multi-product packages, each product must be identified with its number or quantity.",
+
       "validation_type": "text_presence",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "The applicable commodity identity is definitely absent from a sufficiently clear image.",
+
       "verification_required": true,
+
       "source": "Rule 6(1)(b), PDF Page 5/43"
     },
+
 
     {
       "rule_id": "R004",
       "rule_number": "Rule 6(1)(c)",
       "field": "net_quantity",
+
       "requirement": "The net quantity must be declared in the standard unit of weight or measure, or the number of commodities where the commodity is packed or sold by number.",
-      "applicability": "Packages covered by Chapter II",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"]
+      },
+
       "conditions": "The appropriate unit depends on the nature and method of sale of the commodity.",
+
       "validation_type": "quantity_presence_and_unit",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Net quantity is definitely absent from a sufficiently clear image.",
+
       "verification_required": true,
+
       "source": "Rule 6(1)(c), PDF Page 5/43; Rules 12-13, PDF Pages 12-14/43"
     },
+
 
     {
       "rule_id": "R005",
       "rule_number": "Rule 6(1)(d)",
       "field": "manufacture_prepack_import_date",
+
       "requirement": "The month and year in which the commodity is manufactured, pre-packed or imported must be mentioned.",
-      "applicability": "Packages covered by the provision",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "exceptions": ["specified_rule_exceptions"]
+      },
+
       "conditions": "Exceptions include bidis, incense sticks and specified domestic LPG cylinders. Food, seeds and cosmetics are subject to the provisions stated in the rule.",
+
       "validation_type": "date_presence",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "The applicable date declaration is definitely absent and no exception applies.",
+
       "verification_required": true,
+
       "source": "Rule 6(1)(d), PDF Pages 5-7/43"
     },
+
 
     {
       "rule_id": "R006",
       "rule_number": "Rule 6(1)(e)",
       "field": "mrp",
+
       "requirement": "The retail sale price of the package must be declared.",
-      "applicability": "Packages covered by the provision",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "exceptions": [
+          "specified_bidi_exception",
+          "specified_domestic_lpg_exception",
+          "specified_alcoholic_beverage_condition"
+        ]
+      },
+
       "conditions": "The PDF provides exceptions for bidis and domestic LPG cylinders whose price is covered under the Government Administrative Price Mechanism. Alcoholic beverages/spirituous liquor are subject to the stated State Excise Law condition.",
+
       "validation_type": "mrp_presence",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "MRP is definitely absent where the declaration is applicable.",
+
       "verification_required": true,
+
       "source": "Rule 6(1)(e), PDF Pages 6-7/43"
     },
+
 
     {
       "rule_id": "R007",
       "rule_number": "Rule 6(1)(f)",
       "field": "dimensions",
+
       "requirement": "Where the size/dimensions of the commodity are relevant, the dimensions of the commodity must be mentioned. If different pieces have different dimensions, the dimensions of each different piece must be mentioned.",
-      "applicability": "Packages where commodity dimensions are relevant",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "dimensions_relevant"
+      },
+
       "conditions": "Not a universal requirement for every product.",
+
       "validation_type": "conditional_dimension_presence",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Dimensions are definitely absent where the condition makes the declaration applicable.",
+
       "verification_required": true,
+
       "source": "Rule 6(1)(f), PDF Page 6/43"
     },
+
 
     {
       "rule_id": "R008",
       "rule_number": "Rule 6(1)(g)",
       "field": "other_required_declarations",
+
       "requirement": "Other matters specifically required by the Rules must also be declared.",
-      "applicability": "Only where another provision of the Rules requires the declaration",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "category_specific_rule_applies"
+      },
+
       "conditions": "Category-specific provisions may apply.",
+
       "validation_type": "conditional_rule_lookup",
       "ocr_detectable": "PARTIAL",
       "automatic_check": "PARTIAL",
+
       "failure_condition": "A category-specific declaration is definitely absent after applicability has been established.",
+
       "verification_required": true,
+
       "source": "Rule 6(1)(g), PDF Page 6/43"
     },
+
 
     {
       "rule_id": "R009",
       "rule_number": "Rule 6(2)",
       "field": "consumer_complaint_contact",
+
       "requirement": "The package must bear the name, address, telephone number and, if available, email address of the person or office that can be contacted in case of consumer complaints.",
-      "applicability": "Every package covered by the provision",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"]
+      },
+
       "conditions": "Email address is required where available.",
+
       "validation_type": "contact_information_presence",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Required consumer-contact information is definitely absent from a clear image.",
+
       "verification_required": true,
+
       "source": "Rule 6(2), PDF Page 7/43"
     },
+
 
     {
       "rule_id": "R010",
       "rule_number": "Rule 7",
       "field": "declaration_size",
+
       "requirement": "Declarations on the principal display panel must meet the prescribed minimum letter and numeral height requirements.",
-      "applicability": "Packages to which Rule 7 applies",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "rule_7_applies"
+      },
+
       "conditions": "Minimum numeral height depends on declared quantity and principal display panel/printing method. Rule 7(4) provides an exception where the information is also required under another law.",
+
       "validation_type": "visual_size_measurement",
       "ocr_detectable": "PARTIAL",
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Required size can be reliably measured and is below the applicable minimum.",
+
       "verification_required": true,
+
       "source": "Rule 7, PDF Pages 8-9/43"
     },
+
 
     {
       "rule_id": "R011",
       "rule_number": "Rule 8",
       "field": "principal_display_panel",
+
       "requirement": "Every declaration required under the Rules must appear on the principal display panel. The area surrounding the quantity declaration must have the prescribed clear space.",
-      "applicability": "Packages covered by Rule 8",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"]
+      },
+
       "conditions": "Quantity declaration requires specified surrounding clear space.",
+
       "validation_type": "layout_and_position",
       "ocr_detectable": "PARTIAL",
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Location/spacing can be reliably established as non-compliant.",
+
       "verification_required": true,
+
       "source": "Rule 8(1), PDF Page 9/43"
     },
+
 
     {
       "rule_id": "R012",
       "rule_number": "Rule 9",
       "field": "declaration_legibility",
+
       "requirement": "Declarations must be legible and prominent. Retail sale price and net quantity numerals must have the prescribed contrasting colour requirement, subject to the stated exception.",
-      "applicability": "Packages covered by Rule 9",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "exceptions": ["specified_glass_or_plastic_exception"]
+      },
+
       "conditions": "The contrasting-colour requirement has an exception for information blown, formed or molded on glass or plastic surfaces. Handwritten/hand-script declarations must be clear, unambiguous and legible.",
+
       "validation_type": "visual_legibility",
       "ocr_detectable": "PARTIAL",
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Legibility/contrast can be reliably established as non-compliant.",
+
       "verification_required": true,
+
       "source": "Rule 9(1), PDF Page 10/43"
     },
+
 
     {
       "rule_id": "R013",
       "rule_number": "Rule 9(3)",
       "field": "outer_wrapper_declarations",
+
       "requirement": "Where a package has an outside container or wrapper, the outside container/wrapper must also contain the required declarations, subject to the transparency/readability conditions in the rule.",
-      "applicability": "Packages having an outside container or wrapper",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "outside_wrapper_present"
+      },
+
       "conditions": "Transparent outer wrappers may rely on declarations that are easily readable through the wrapper as specified by the rule.",
+
       "validation_type": "wrapper_declaration_check",
       "ocr_detectable": "PARTIAL",
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Applicable wrapper declarations are definitely absent.",
+
       "verification_required": true,
+
       "source": "Rule 9(3), PDF Page 10/43"
     },
+
 
     {
       "rule_id": "R014",
       "rule_number": "Rule 9(4)",
       "field": "declaration_language",
+
       "requirement": "The particulars of declarations required under the rule must be in Hindi in Devanagari script or in English. Additional languages are permitted.",
-      "applicability": "Packages covered by Rule 9",
+
+      "applicability": {
+        "type": "chapter_ii",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"]
+      },
+
       "conditions": "Other languages may be used in addition to Hindi or English.",
+
       "validation_type": "language_detection",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Required declarations are clearly provided only in a language that does not satisfy the rule.",
+
       "verification_required": true,
+
       "source": "Rule 9(4), PDF Page 10/43"
     },
+
 
     {
       "rule_id": "R015",
       "rule_number": "Rule 10(1)",
       "field": "complete_manufacturer_address",
+
       "requirement": "The package must conspicuously bear the name and complete address of the manufacturer, or manufacturer and packer where they are different, and importer details for imported packages.",
-      "applicability": "Packages kept, offered, exposed for sale or sold",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "package_kept_offered_exposed_or_sold"
+      },
+
       "conditions": "For packages of capacity 5 cubic centimetres or less, a mark or inscription enabling identification may be sufficient. If a commodity manufactured outside India is packed in India, the principal display panel must contain the name and complete address of the packer or importer in India.",
+
       "validation_type": "address_structure_check",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Required identity/address information is definitely absent where applicable.",
+
       "verification_required": true,
+
       "source": "Rule 10(1), PDF Page 11/43"
     },
+
 
     {
       "rule_id": "R016",
       "rule_number": "Rule 10(2)",
       "field": "actual_business_name",
+
       "requirement": "The manufacturer, packer or importer name must be the actual corporate name or, if not incorporated, the name under which the business is conducted in India.",
-      "applicability": "Manufacturer, packer and importer declarations",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "manufacturer_packer_importer_identity",
+        "trigger": "manufacturer_packer_or_importer_present"
+      },
+
       "conditions": "Requires comparison with reliable business/registration information; image alone generally cannot establish this.",
+
       "validation_type": "manual_identity_verification",
       "ocr_detectable": true,
       "automatic_check": "NO",
+
       "failure_condition": "Cannot be established reliably from label image alone.",
+
       "verification_required": true,
+
       "source": "Rule 10(2), PDF Page 11/43"
     },
+
 
     {
       "rule_id": "R017",
       "rule_number": "Rule 11",
       "field": "net_quantity_accuracy",
+
       "requirement": "The declared net quantity must exclude wrappers and other packaging material. Depending on environmental variation, the declared quantity must correspond to the quantity received by the consumer or may be qualified by 'when packed' only where permitted.",
-      "applicability": "Packages where quantity is declared",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "quantity_declared"
+      },
+
       "conditions": "Significant environmental variation may permit 'when packed' as specified in the Third Schedule.",
+
       "validation_type": "quantity_accuracy",
       "ocr_detectable": "PARTIAL",
       "automatic_check": "NO",
+
       "failure_condition": "Cannot establish actual physical quantity from label image alone.",
+
       "verification_required": true,
+
       "source": "Rule 11, PDF Pages 11-12/43"
     },
+
 
     {
       "rule_id": "R018",
       "rule_number": "Rule 12",
       "field": "quantity_unit",
+
       "requirement": "The quantity must be expressed using the appropriate unit of weight, measure or number. The unit depends on whether the commodity is sold by mass, length, area, volume or number.",
-      "applicability": "Packages declaring quantity",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "quantity_declared"
+      },
+
       "conditions": "Fourth Schedule commodities may have specific treatment.",
+
       "validation_type": "unit_validation",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "The unit is clearly inappropriate for the applicable commodity and no exception applies.",
+
       "verification_required": true,
+
       "source": "Rule 12, PDF Pages 12-13/43"
     },
+
 
     {
       "rule_id": "R019",
       "rule_number": "Rule 12(6)",
       "field": "misleading_quantity_words",
+
       "requirement": "The quantity declaration must not contain words or expressions that create an exaggerated, misleading or inadequate impression about quantity.",
-      "applicability": "Packages declaring quantity",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "quantity_declared"
+      },
+
       "conditions": "The PDF gives examples of potentially misleading expressions.",
+
       "validation_type": "text_pattern_check",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "A prohibited/misleading quantity expression is confidently identified.",
+
       "verification_required": true,
+
       "source": "Rule 12(6), PDF Page 13/43"
     },
+
 
     {
       "rule_id": "R020",
       "rule_number": "Rule 13",
       "field": "unit_format",
+
       "requirement": "Units of weight, measure or number must follow the units prescribed by the Rule. The International System of Units must be used for net quantity.",
-      "applicability": "Packages declaring net quantity",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "quantity_declared"
+      },
+
       "conditions": "The Rule specifies units according to quantity and commodity type. For items sold by number, the PDF states that the symbol should be N or U.",
+
       "validation_type": "unit_format_validation",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "The unit format clearly violates the applicable provision.",
+
       "verification_required": true,
+
       "source": "Rule 13, PDF Pages 13-14/43"
     },
+
 
     {
       "rule_id": "R021",
       "rule_number": "Rule 14",
       "field": "textile_dimensions",
+
       "requirement": "For commodities such as bed-sheets, hemmed fabric materials, dhoties, sarees, napkins, pillow-covers, towels, table cloths and similar commodities, the number and finished dimensions must be declared.",
-      "applicability": "Specified textile/similar commodities",
+
+      "applicability": {
+        "type": "category_specific",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "specified_textile_commodity"
+      },
+
       "conditions": "If different pieces have different dimensions, dimensions and retail sale price of each piece must also be declared as specified.",
+
       "validation_type": "category_specific_dimension_check",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Applicable dimensions are definitely absent.",
+
       "verification_required": true,
+
       "source": "Rule 14, PDF Page 14/43"
     },
+
 
     {
       "rule_id": "R022",
       "rule_number": "Rule 15",
       "field": "dimension_weight_price_relation",
+
       "requirement": "Where dimensions and/or weight have a relationship to the price of the commodity, the quantity declaration must also include the relevant dimensions, weight or combination.",
-      "applicability": "Commodities where dimensions/weight are related to price",
+
+      "applicability": {
+        "type": "conditional",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "dimensions_or_weight_related_to_price"
+      },
+
       "conditions": "Conditional requirement.",
+
       "validation_type": "category_and_relationship_check",
       "ocr_detectable": "PARTIAL",
       "automatic_check": "NO",
+
       "failure_condition": "Applicability cannot be established reliably from image alone.",
+
       "verification_required": true,
+
       "source": "Rule 15, PDF Page 14/43"
     },
+
 
     {
       "rule_id": "R023",
       "rule_number": "Rule 16",
       "field": "usable_sheet_count",
+
       "requirement": "Packages containing sheets such as aluminium foil, facial tissues, waxed paper, toilet paper or other sheets must state the number of usable sheets and dimensions of each sheet.",
-      "applicability": "Sheet-type commodities",
+
+      "applicability": {
+        "type": "category_specific",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "sheet_type_commodity"
+      },
+
       "conditions": "Category-specific.",
+
       "validation_type": "sheet_count_and_dimension_check",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Applicable sheet count/dimensions are definitely absent.",
+
       "verification_required": true,
+
       "source": "Rule 16, PDF Page 15/43"
     },
+
 
     {
       "rule_id": "R024",
       "rule_number": "Rule 17",
       "field": "container_dimensions",
+
       "requirement": "Container-type commodities must declare quantity and the dimensions required by the applicable container type.",
-      "applicability": "Bags, boxes, cups, pans and similar commodities sold as containers",
+
+      "applicability": {
+        "type": "category_specific",
+        "scope": "retail_sale",
+        "conditions": ["A001", "A002"],
+        "exclusions": ["E001", "E002", "E003"],
+        "trigger": "container_type_commodity"
+      },
+
       "conditions": "The exact declaration depends on bag, rectangular, circular or other container type.",
+
       "validation_type": "category_specific_dimension_check",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Applicable quantity/dimensions are definitely absent.",
+
       "verification_required": true,
+
       "source": "Rule 17, PDF Pages 15/43"
     },
+
 
     {
       "rule_id": "R025",
       "rule_number": "Rule 24",
       "field": "wholesale_package_declarations",
+
       "requirement": "A wholesale package must bear a legible, definite, plain and conspicuous declaration of manufacturer/importer/packer identity, commodity identity, and total number of retail packages or net quantity.",
-      "applicability": "Wholesale packages",
+
+      "applicability": {
+        "type": "wholesale",
+        "scope": "wholesale_package",
+        "trigger": "wholesale_package"
+      },
+
       "conditions": "Does not apply where a similar declaration is required by another law as specified in the rule.",
+
       "validation_type": "wholesale_package_check",
       "ocr_detectable": true,
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Applicable wholesale declarations are definitely absent.",
+
       "verification_required": true,
+
       "source": "Rule 24, PDF Page 23/43"
     },
+
 
     {
       "rule_id": "R026",
       "rule_number": "Rule 25",
       "field": "export_package_sale_in_india",
+
       "requirement": "An export package must be repacked or relabeled according to Chapter II before being sold in India.",
-      "applicability": "Export packages sold in India",
+
+      "applicability": {
+        "type": "conditional",
+        "trigger": "export_package_sold_in_india"
+      },
+
       "conditions": "Category/situation-specific.",
+
       "validation_type": "manual_context_check",
       "ocr_detectable": "NO",
       "automatic_check": "NO",
+
       "failure_condition": "Cannot be established from label image alone.",
+
       "verification_required": true,
+
       "source": "Rule 25, PDF Page 23/43"
     },
+
 
     {
       "rule_id": "R027",
       "rule_number": "Rule 26",
       "field": "package_exemption",
+
       "requirement": "Certain packages are exempt from the Rules, including packages with net weight/measure of 10 g or 10 ml or less, subject to the provision stated in the rule, fast food packed by restaurants/hotels, specified drug formulations, and agricultural farm produce in packages above 50 kg.",
-      "applicability": "Specified exempt packages",
+
+      "applicability": {
+        "type": "exemption",
+        "scope": "specified_exempt_packages",
+        "trigger": "possible_rule_26_exemption"
+      },
+
       "conditions": "The rule itself contains conditions and a provision concerning MRP and net quantity for packages from 10 g to 20 g or 10 ml to 20 ml in the PDF version.",
+
       "validation_type": "exemption_check",
       "ocr_detectable": "PARTIAL",
       "automatic_check": "PARTIAL",
+
       "failure_condition": "An exemption is incorrectly applied when the package does not satisfy the rule.",
+
       "verification_required": true,
+
       "source": "Rule 26, PDF Page 23/43"
     },
+
 
     {
       "rule_id": "R028",
       "rule_number": "Rule 31",
       "field": "advertisement_net_quantity",
+
       "requirement": "An advertisement mentioning the retail sale price of a pre-packaged commodity must contain a declaration of the net quantity or number of the commodity. The font size of net quantity in the advertisement must be the same as that of the retail sale price.",
-      "applicability": "Advertisements mentioning retail sale price",
+
+      "applicability": {
+        "type": "advertisement",
+        "trigger": "advertisement_mentions_retail_sale_price"
+      },
+
       "conditions": "Advertisement-specific, not a normal package-label check.",
+
       "validation_type": "advertisement_check",
       "ocr_detectable": "PARTIAL",
       "automatic_check": "PARTIAL",
+
       "failure_condition": "Applicable advertisement declaration is definitely absent or size differs where measurable.",
+
       "verification_required": true,
+
       "source": "Rule 31, PDF Page 26/43"
     }
 
   ],
+
 
   "prototype_priority_rules": [
     "R002",
@@ -451,6 +902,7 @@
     "R020"
   ],
 
+
   "ocr_fields": [
     {
       "field": "product_name",
@@ -458,91 +910,135 @@
       "required": true,
       "status_type": "MANDATORY"
     },
+
     {
       "field": "net_quantity",
-      "rule_numbers": ["Rule 6(1)(c)", "Rule 12", "Rule 13"],
+      "rule_numbers": [
+        "Rule 6(1)(c)",
+        "Rule 12",
+        "Rule 13"
+      ],
       "required": true,
       "status_type": "MANDATORY"
     },
+
     {
       "field": "mrp",
       "rule_numbers": ["Rule 6(1)(e)"],
       "required": true,
       "status_type": "MANDATORY_WITH_EXCEPTIONS"
     },
+
     {
       "field": "manufacturer",
-      "rule_numbers": ["Rule 6(1)(a)", "Rule 10"],
+      "rule_numbers": [
+        "Rule 6(1)(a)",
+        "Rule 10"
+      ],
       "required": true,
       "status_type": "MANDATORY"
     },
+
     {
       "field": "packer",
-      "rule_numbers": ["Rule 6(1)(a)", "Rule 10"],
+      "rule_numbers": [
+        "Rule 6(1)(a)",
+        "Rule 10"
+      ],
       "required": false,
       "status_type": "CONDITIONAL"
     },
+
     {
       "field": "importer",
-      "rule_numbers": ["Rule 6(1)(a)", "Rule 10"],
+      "rule_numbers": [
+        "Rule 6(1)(a)",
+        "Rule 10"
+      ],
       "required": false,
       "status_type": "CONDITIONAL"
     },
+
     {
       "field": "manufacture_prepack_import_date",
       "rule_numbers": ["Rule 6(1)(d)"],
       "required": true,
       "status_type": "MANDATORY_WITH_EXCEPTIONS"
     },
+
     {
       "field": "consumer_contact_name",
       "rule_numbers": ["Rule 6(2)"],
       "required": true,
       "status_type": "MANDATORY"
     },
+
     {
       "field": "consumer_contact_address",
       "rule_numbers": ["Rule 6(2)"],
       "required": true,
       "status_type": "MANDATORY"
     },
+
     {
       "field": "consumer_phone",
       "rule_numbers": ["Rule 6(2)"],
       "required": true,
       "status_type": "MANDATORY"
     },
+
     {
       "field": "consumer_email",
       "rule_numbers": ["Rule 6(2)"],
       "required": false,
       "status_type": "CONDITIONAL_IF_AVAILABLE"
     },
+
     {
       "field": "dimensions",
-      "rule_numbers": ["Rule 6(1)(f)", "Rule 12(4)", "Rule 14", "Rule 15", "Rule 16", "Rule 17"],
+      "rule_numbers": [
+        "Rule 6(1)(f)",
+        "Rule 12(4)",
+        "Rule 14",
+        "Rule 15",
+        "Rule 16",
+        "Rule 17"
+      ],
       "required": false,
       "status_type": "CATEGORY_SPECIFIC"
     }
   ],
 
+
   "status_policy": {
-    "PASS": "Required information is clearly detected and the applicable automated validation succeeds.",
-    "FAIL": "Use only when the applicable requirement is definitely absent or definitely violated and the image/data is sufficient to establish the absence or violation.",
-    "NEEDS_VERIFICATION": "Use when OCR is uncertain, image quality is insufficient, applicability is conditional, or manual/legal verification is required.",
+
+    "PASS": "Required information is clearly detected and applicable automated validation succeeds.",
+
+    "FAIL": "Use only when the applicable requirement is definitely absent or definitely violated and the evidence is sufficient to establish the absence or violation.",
+
+    "NEEDS_VERIFICATION": "Use when OCR is uncertain, image quality is insufficient, applicability is uncertain, or manual/legal verification is required.",
+
+    "NOT_APPLICABLE": "Use when a defined applicability exclusion or condition establishes that the rule does not apply.",
+
     "IMPORTANT": "Missing OCR text alone must never automatically produce FAIL."
   },
 
+
   "overall_result_logic": {
+
     "priority": [
       "FAIL",
       "NEEDS_VERIFICATION",
       "PASS"
     ],
+
     "logic": {
       "any_definite_failure": "FAIL",
       "else_if_any_verification_required": "NEEDS_VERIFICATION",
-      "else": "PASS"
+      "else_if_all_applicable_rules_pass": "PASS",
+      "else_if_no_rules_are_applicable": "NOT_APPLICABLE"
     }
+
   }
+
 }
