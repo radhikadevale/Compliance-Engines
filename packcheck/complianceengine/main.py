@@ -2,6 +2,8 @@
 # PackCheck - Main
 # ============================================================
 
+import json
+
 from product_data import product
 
 from applicability import (
@@ -12,6 +14,103 @@ from checker import (
     check_product,
     get_overall_status
 )
+
+
+# ============================================================
+# Build structured compliance output
+# ============================================================
+
+def build_compliance_result(
+    product,
+    applicability_result,
+    results,
+    overall_status
+):
+
+    # --------------------------------------------------------
+    # Product information
+    # --------------------------------------------------------
+
+    product_result = {
+        "product_name": product["product_name"]["value"],
+        "net_quantity": product["net_quantity"]["value"],
+        "mrp": product["mrp"]["value"],
+        "manufacturer": product["manufacturer"]["value"]
+    }
+
+
+    # --------------------------------------------------------
+    # Summary
+    # --------------------------------------------------------
+
+    summary = {
+
+        "total_rules": len(results),
+
+        "passed": sum(
+            1
+            for result in results
+            if result["status"] == "PASS"
+        ),
+
+        "failed": sum(
+            1
+            for result in results
+            if result["status"] == "FAIL"
+        ),
+
+        "needs_verification": sum(
+            1
+            for result in results
+            if result["status"] == "NEEDS_VERIFICATION"
+        )
+    }
+
+
+    # --------------------------------------------------------
+    # Final structured result
+    # --------------------------------------------------------
+
+    compliance_result = {
+
+        "product": product_result,
+
+        "applicability": {
+            "status": applicability_result["status"],
+            "reason": applicability_result["reason"]
+        },
+
+        "overall_status": overall_status,
+
+        "summary": summary,
+
+        "rule_results": results
+    }
+
+
+    return compliance_result
+
+
+# ============================================================
+# Save JSON
+# ============================================================
+
+def save_compliance_result(
+    compliance_result
+):
+
+    with open(
+        "compliance_result.json",
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            compliance_result,
+            file,
+            indent=4,
+            ensure_ascii=False
+        )
 
 
 # ============================================================
@@ -225,6 +324,38 @@ def main():
         )
 
         print("-" * 60)
+
+
+    # ========================================================
+    # STEP 5 — CREATE DATABASE INPUT
+    # ========================================================
+
+    compliance_result = build_compliance_result(
+        product,
+        applicability_result,
+        results,
+        overall_status
+    )
+
+
+    # ========================================================
+    # STEP 6 — SAVE DATABASE INPUT
+    # ========================================================
+
+    save_compliance_result(
+        compliance_result
+    )
+
+
+    print()
+    print("=" * 60)
+    print(
+        "Compliance result saved to:"
+    )
+    print(
+        "compliance_result.json"
+    )
+    print("=" * 60)
 
 
 # ============================================================
